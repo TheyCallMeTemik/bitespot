@@ -23,6 +23,15 @@ menu = ReplyKeyboardMarkup(
     resize_keyboard=True
 )
 
+# Районы для выбора
+districts_menu = ReplyKeyboardMarkup(
+    keyboard=[
+        [KeyboardButton(text="Бостандыкский")],
+        [KeyboardButton(text="Алмалинский")]
+    ],
+    resize_keyboard=True
+)
+
 # Реальные кафе и рестораны рядом с КБТУ
 places = [
     {"name": "MENDAL", "offer": "Бизнес-ланч — 3990 тг (Суп дня, котлеты, куриный шашлык, люля-кебаб, макароны, рис, чай, компот, баклава)", "district": "Бостандыкский", "promo": True, "daily": False},
@@ -75,7 +84,7 @@ async def districts_handler(message: types.Message):
         "📍 В каких районах ищем еду?\n\n"
         "Выберите район, чтобы найти кафе с лучшими предложениями рядом!"
     )
-    await message.answer(text)
+    await message.answer(text, reply_markup=districts_menu)
 
 # Обработка кнопки "Реклама для кафе"
 @dp.message(lambda message: message.text == "💼 Реклама для кафе")
