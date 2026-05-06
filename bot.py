@@ -1,10 +1,10 @@
 import asyncio
 from aiogram import Bot, Dispatcher, types
 from aiogram.filters import Command
-from aiogram.types import ReplyKeyboardMarkup, KeyboardButton
+from aiogram.types import ReplyKeyboardMarkup, KeyboardButton, InlineKeyboardMarkup, InlineKeyboardButton
 import stripe
 
-# Тестовый Secret Key для Stripe (замените на свой, если нужно)
+# Stripe Secret Key (тестовый или реальный)
 stripe.api_key = "sk_test_51TU1tk1DqzENdtT5xi0Ip0DTNUYdPJVguw6gNgkObtkOJxCS7cC12GxZsvC639NE28s4jJ80hzoZpTSxNvhhuaKG00gQGXyxbb"
 
 TOKEN = "7828344943:AAFEvi8vIkcDFzmwtihn_HbzcZ1M8SN7esQ"
@@ -24,7 +24,7 @@ menu = ReplyKeyboardMarkup(
     resize_keyboard=True
 )
 
-# Меню выбора района (с кнопкой возврата)
+# Меню выбора района с кнопкой возврата
 districts_menu = ReplyKeyboardMarkup(
     keyboard=[
         [KeyboardButton(text="Бостандыкский")],
@@ -34,7 +34,7 @@ districts_menu = ReplyKeyboardMarkup(
     resize_keyboard=True
 )
 
-# Данные о заведениях
+# Данные кафе и ресторанов
 places = [
     {"name": "MENDAL", "offer": "Бизнес-ланч — 3990 тг (Суп дня, котлеты, куриный шашлык, люля-кебаб, макароны, рис, чай, компот, баклава)", "district": "Бостандыкский", "promo": True, "daily": False},
     {"name": "Чачапури Абылайхан", "offer": "Скидка 10% на все позиции в течение 1 недели", "district": "Алмалинский", "promo": True, "daily": True},
@@ -47,6 +47,7 @@ places = [
 async def start_handler(message: types.Message):
     text = (
         "Привет! 👋 Я **BiteSpot** 🍔 — бот для поиска дешёвой еды рядом с университетом.\n\n"
+        "Я помогу найти лучшие акции и предложения в кафе.\n"
         "Выберите нужную кнопку меню."
     )
     await message.answer(text, reply_markup=menu)
@@ -74,7 +75,7 @@ async def daily_deals_handler(message: types.Message):
 
 @dp.message(lambda message: message.text == "📍 Выбрать район")
 async def districts_handler(message: types.Message):
-    text = "📍 В каких районах ищем еду?\n\nВыберите район:"
+    text = "📍 В каком районе ищем еду?\n\nВыберите район:"
     await message.answer(text, reply_markup=districts_menu)
 
 @dp.message(lambda message: message.text == "Бостандыкский")
@@ -110,7 +111,7 @@ async def cafe_handler(message: types.Message):
         "1. Размещение акций — 3000 тг/неделя\n"
         "2. Продвижение в топ — 5000 тг/неделя\n"
         "3. Рекламное место — 7000 тг\n\n"
-        "Нажмите «💳 Оплатить акцию»."
+        "Для оплаты нажмите кнопку «💳 Оплатить акцию» в главном меню."
     )
     await message.answer(text)
 
@@ -132,22 +133,25 @@ async def payment_handler(message: types.Message):
                 },
             ],
             mode='payment',
-            success_url='https://httpbin.org/get?status=success',   # публичный тестовый URL
-            cancel_url='https://httpbin.org/get?status=cancel',     # публичный тестовый URL
+            success_url='https://bitespot.space/payment/success',
+            cancel_url='https://bitespot.space/payment/failed',
         )
+        
+        keyboard = InlineKeyboardMarkup(inline_keyboard=[
+            [InlineKeyboardButton(text="💳 Перейти к оплате", url=session.url)]
+        ])
+        
         await message.answer(
-            f"✅ Ссылка на оплату (тестовый режим): {session.url}\n\n"
-            "💳 Используйте тестовую карту: `4242 4242 4242 4242`\n"
-            "📅 Любой будущий срок, любой CVC.\n\n"
-            "После оплаты вы будете перенаправлены на httpbin.org – это нормально для демонстрации."
+            "Оплатите размещение акции. После успешной оплаты вы вернётесь на наш сайт.",
+            reply_markup=keyboard
         )
     except Exception as e:
-        await message.answer("❌ Ошибка при создании платежа. Попробуйте позже.")
+        await message.answer("❌ Произошла ошибка. Попробуйте позже.")
         print(f"Stripe error: {e}")
 
 @dp.message()
 async def unknown_message(message: types.Message):
-    await message.answer("Пожалуйста, используйте кнопки меню. Нажмите /start для начала.", reply_markup=menu)
+    await message.answer("Пожалуйста, используйте кнопки меню. Нажмите /start для перезапуска.", reply_markup=menu)
 
 async def main():
     await dp.start_polling(bot)
